@@ -47,6 +47,8 @@ def test_rrf_preserves_exact_identifiers():
     assert rrf([['exact'],['general','exact'],['general','exact']])[0] == 'exact'
     assert codes('شو متطلب SWER312؟') == ['SWER312']
     assert codes('SWER 351 كم ساعة؟') == ['SWER351']
+    assert codes('المتطلب لـMATH141؟') == ['MATH141']
+    assert codes('موعد ENGL120؟') == ['ENGL120']
     assert normalize('إِرشاد') == normalize('ارشاد')
 
 def test_chunks_do_not_split_rows():
@@ -108,5 +110,6 @@ def test_scope_does_not_invent_course_exam_schedule_or_credentials():
     assert unsupported_request(db,'اعطيني كلمة سر الجامعة')
     assert unsupported_request(db,'When is the next exam for SWER241?')
     assert unsupported_request(db,'شو موعد الامتحان القادم لـ SWER241؟')
+    assert unsupported_request(db,'متى الامتحان القادم لـMATH141؟')
     assert unsupported_request(db,'ما سياسة الغياب عن الامتحان؟') is None
     assert unsupported_request(db,'SWER351 credits?') is None

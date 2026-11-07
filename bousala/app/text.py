@@ -12,7 +12,8 @@ def normalize(text: str) -> str:
 
 def codes(text: str) -> list[str]:
     value = re.sub(r'([A-Z]{4})\s+(\d{3})', r'\1\2', normalize(text))
-    return re.findall(r'\b(?:[A-Z]{4}\d{3}|SWERGR1)\b', value)
+    # Arabic clitics may touch a Latin code; Unicode \b incorrectly rejects that.
+    return re.findall(r'(?<![A-Z0-9])(?:[A-Z]{4}\d{3}|SWERGR1)(?![A-Z0-9])', value)
 
 @lru_cache(maxsize=1)
 def embedder():
