@@ -3,8 +3,9 @@ import re
 from app.config import ROOT
 from app.ingest import pages
 
-def admission_rules():
-    text = pages(ROOT/'sources/catalog/acceptance_to_major_2024_2025.pdf')[0]
+def admission_rules(text=None):
+    if text is None:
+        text = pages(ROOT/'sources/catalog/acceptance_to_major_2024_2025.pdf')[0]
     patterns = {'earned_credits':r'earned\s+(\d+)\s+credits',
                 'overall_gpa':r'overall cumulative GPA of\s+([\d.]+)',
                 'major_gpa':r'major cumulative GPA of\s+([\d.]+)',

@@ -50,7 +50,7 @@ class Course(Base):
     applicability: Mapped[dict] = mapped_column(JSONB)
     evidence: Mapped[list] = mapped_column(JSONB)
     placeholder: Mapped[bool] = mapped_column(Boolean, default=False)
-    __table_args__ = (UniqueConstraint('catalog_id', 'code'), CheckConstraint('credits BETWEEN 0 AND 4'))
+    __table_args__ = (UniqueConstraint('catalog_id', 'code'), CheckConstraint('credits BETWEEN 0 AND 30',name='courses_credit_range'))
 
 class Prerequisite(Base):
     __tablename__ = 'prerequisite_rules'

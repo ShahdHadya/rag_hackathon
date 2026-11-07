@@ -20,6 +20,19 @@ def test_latest_choice_overrides_previous_regular():
 def test_placement_without_history_does_not_invent_question():
     assert resolve_followup('Intensive',[])==('Intensive','intensive')
 
+def test_chained_choices_keep_original_question():
+    history=[Turn(role='user',content='كم ساعة مطلوبة لتخصص هندسة البرمجيات Regular؟'),Turn(role='assistant',content='جواب سابق'),Turn(role='user',content='Intermediate ?'),Turn(role='assistant',content='جواب سابق')]
+    question,track=resolve_followup('Intensive',history)
+    assert 'كم ساعة' in question and track=='intensive'
+    db=Mock()
+    db.get.return_value=SimpleNamespace(value={'breakdown':{'University Requirement':31,'Faculty Requirement':18,'Major Requirement':66,'Major Elective':15},'additions':{'regular':0,'intermediate':2,'intensive':4}})
+    with patch('app.rules.evidence',return_value={'source_id':'catalog_degree','page':1}):
+        kind,answer,_=lookup(db,question,track)
+    assert kind=='lookup' and '134 ساعة' in answer
+
+def test_choices_without_original_do_not_fabricate_context():
+    assert resolve_followup('Intensive',[Turn(role='user',content='Intermediate ?')])==('Intensive','intensive')
+
 @pytest.mark.parametrize('choice,total',[('Intermediate',132),('Intensive',134)])
 def test_followup_reaches_degree_lookup_with_evidence(choice,total):
     question,track=resolve_followup(choice,[Turn(role='user',content='كم ساعة مطلوب لتخصص هندسة البرمجيات للمستوى العادي؟')])

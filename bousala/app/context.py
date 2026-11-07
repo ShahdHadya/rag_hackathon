@@ -14,11 +14,14 @@ def track_from_text(text):
                 matches.append((match.start(),track))
     return min(matches)[1] if matches else None
 
-def resolve_followup(message,history):
+def exact_track_choice(message):
     value=normalize(message).strip(' .؟?')
-    exact_track=next((track for track,aliases in TRACKS.items() if value in {normalize(a) for a in aliases}),None)
+    return next((track for track,aliases in TRACKS.items() if value in {normalize(a) for a in aliases}),None)
+
+def resolve_followup(message,history):
+    exact_track=exact_track_choice(message)
     if exact_track:
-        previous=next((turn.content for turn in reversed(history[-6:]) if turn.role=='user'),None)
+        previous=next((turn.content for turn in reversed(history[-6:]) if turn.role=='user' and not exact_track_choice(turn.content)),None)
         if previous:
             # Latest explicit choice leads so it overrides an earlier placement.
             return message+' — '+previous,exact_track

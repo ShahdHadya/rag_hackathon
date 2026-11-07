@@ -1,12 +1,18 @@
 # Bousala | بوصلة
 
-Local academic RAG phase for Bethlehem University's Software Engineering catalog 2024–2025. This is one chat page, not a student-record or registration system. The original Streamlit starter remains at the parent directory, with its own independent index.
+Local academic RAG for Bethlehem University's Software Engineering and Computer Simulation in Science and Engineering catalogs 2024–2025. This is one chat page, not a student-record or registration system. The original Streamlit starter remains at the parent directory, with its own independent index.
 
 ## Expansion status (work in progress)
 
-This snapshot includes English-track follow-up resolution, preliminary multi-curriculum database models/migration 002, Simulation PDF inspection tooling and frontend dependencies for the planned UI upgrade. Simulation ingestion, authentication, student profiles and the expanded UI are not implemented yet. Suggested questions remain available in the existing chat.
+This snapshot implements program-selection buttons, scoped Simulation ingestion/retrieval/lookups and persistent suggested questions. Switching programs starts a new browser conversation. Repeated English-track follow-ups resolve to the original recent user question. Authentication, student profiles and the full expanded UI are not implemented yet; their database models are preliminary.
 
-Existing installations need `python -m alembic upgrade head` from this directory before using the updated source models, then a backend restart. Migration 002 is additive but has not been integration-tested against a live database in this snapshot; back up the dedicated database before applying it. Local credentials, PDFs, extracted reports, storage and database backups are excluded from Git.
+Existing installations need `python -m alembic upgrade head` from this directory before using the updated models, then a backend restart. Migrations 002 and 003 were applied successfully to the local database after a local backup. Migration 003 expands the course-credit range to accommodate the official six-credit Simulation project. Local credentials, PDFs, extracted reports, storage and database backups are excluded from Git.
+
+Import the six supplied official Simulation PDFs using `python -m app.simulation --folder "PATH_TO_PDFS"`. The filenames must identify majorCode=248, catalogID=44 and page=0 through page=5. The importer checks program headers, parses all three English-track tables, reconciles only its own chunks and preserves Software data and the configured embedding model. Local verification found 18 PDF pages, 138 track rows and 44 distinct course/group codes. Repeated elective-group rows are slots, not extra distinct courses. No Simulation prerequisite rules were supplied; none are inferred from the paradigm or inherited from shared Software course codes.
+
+General document answers now use a conservative extractive mode: Qwen selects short verbatim excerpts, and the backend rejects altered text, invalid source IDs and numeric grounding failures. Excerpts retain their source language. Structured verified degree/course/admission answers remain available in Arabic/English. Nonacademic questions are rejected before generation. Verbatim matching prevents invented wording but is not a complete semantic relevance proof; selection quality still requires evaluation.
+
+Current verification: 33 tests passed, one opt-in database test skipped, frontend build passed. Live API checks verified both programs' 130/132/134 track totals with their own degree citations, repeated follow-ups, the six-credit Simulation project, unavailable Simulation prerequisites and Arabic/English rejection of the sun-color question without citations. These checks do not certify every possible question or the unfinished platform features.
 
 ```text
 7 bundled PDFs + prerequisite CSV → source/page/row registry → chunks + structured courses

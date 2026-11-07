@@ -121,13 +121,12 @@ def ingest(rebuild=False):
         grouped = {}
         for row in parsed_courses:
             grouped.setdefault(row['code'], []).append(row)
-        db.execute(delete(Course))
         for code, variants in grouped.items():
             first = variants[0]
             if len({r['credits'] for r in variants}) != 1:
                 issues.append({'code': code, 'issue': 'Conflicting credit values; not imported'})
                 continue
-            db.add(Course(id='44:'+code, code=code, name=first['name'], credits=first['credits'], category=first['category'],
+            db.merge(Course(id='44:'+code, code=code, name=first['name'], credits=first['credits'], category=first['category'],
                           applicability={'tracks': sorted({r['track'] for r in variants})},
                           evidence=[{'source_id': 'catalog_courses', 'page': r['page'], 'track': r['track']} for r in variants],
                           placeholder=code in ('FINEART', 'POLSHUM', 'RELSPHI', 'SWERGR1')))

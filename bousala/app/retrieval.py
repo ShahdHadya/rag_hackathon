@@ -3,6 +3,7 @@ from sqlalchemy import select
 from app.config import TOP_K
 from app.models import Setting, Chunk, Source
 from app.text import embed, normalize, codes, embedding_spec
+from app.programs import source_scope
 
 def check_index(db):
     setting = db.get(Setting, 'embedding')
@@ -18,11 +19,12 @@ def rrf(rankings, k=60):
             scores[key] = scores.get(key, 0)+1/(k+rank)
     return sorted(scores, key=lambda key: scores[key], reverse=True)
 
-def retrieve(db, question: str, top_k=TOP_K):
+def retrieve(db, question: str, top_k=TOP_K, program='software'):
     check_index(db)
     vector = embed([question])[0]
     distance = Chunk.embedding.cosine_distance(vector)
-    nearest = list(db.execute(select(Chunk.id, distance.label('distance')).order_by(distance).limit(20)))
+    scope=source_scope(program)
+    nearest = list(db.execute(select(Chunk.id, distance.label('distance')).join(Source,Source.id==Chunk.source_id).where(scope).order_by(distance).limit(20)))
     # Arabic keyword search does not depend on English PostgreSQL text stemming.
     terms = re.findall(r'[A-Z]{4}\d{3}|[\u0621-\u064a]{3,}|[A-Z]{3,}', normalize(question))
     stop = {'WHAT', 'THE', 'ARE', 'HOW', 'FOR', 'CAN', 'شو', 'كيف', 'بقدر', 'المطلوب'}
@@ -30,7 +32,7 @@ def retrieve(db, question: str, top_k=TOP_K):
     aliases = {'GPA': 'معدل', 'DROP': 'حذف', 'WITHDRAW': 'انسحاب', 'LOAD': 'عبء', 'GRADE': 'علامات'}
     terms += [aliases[t] for t in terms if t in aliases]
     # Corpus is tiny: transparent normalized keyword scoring, fused with vector ranks.
-    all_chunks = db.scalars(select(Chunk)).all()
+    all_chunks = db.scalars(select(Chunk).join(Source,Source.id==Chunk.source_id).where(scope)).all()
     keyword = sorted(all_chunks, key=lambda c: sum(t in c.normalized for t in terms), reverse=True)
     keyword_ids = [c.id for c in keyword if any(t in c.normalized for t in terms)][:20]
     identifiers = codes(question)
@@ -50,7 +52,7 @@ def retrieve(db, question: str, top_k=TOP_K):
         if focused:
             ranking = focused
     by_id = {c.id: c for c in all_chunks}
-    sources = {s.id: s for s in db.scalars(select(Source).where(Source.active))}
+    sources = {s.id: s for s in db.scalars(select(Source).where(scope))}
     results = []
     for key in ranking:
         chunk = by_id[key]
