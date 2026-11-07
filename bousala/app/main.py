@@ -13,13 +13,13 @@ from langchain_ollama import ChatOllama
 from functools import lru_cache
 from app.config import MODEL, OLLAMA_URL, CONFIG_REVISION, EMBEDDING_MODEL
 from app.db import session
-from app.models import Source, FAQ, Cache, Event, Setting
+from app.models import Source, Cache, Event, Setting
 from app.text import normalize, embedder
 from app.retrieval import retrieve, check_index
 from app.rules import lookup
 from app.numeric_grounding import numeric_failures
 from app.scope import unsupported_request
-from app.context import resolve_followup
+from app.context import resolve_followup, track_from_text
 from app.programs import source_scope, suggested_questions
 
 REFUSAL = 'المعلومة غير متوفرة أو غير مؤكدة في المصادر الموجودة عندي'
@@ -120,7 +120,13 @@ def chat(db, request, use_cache=True):
         revision+=':'+version.value['hash']
     key = cache_key(request, revision)
     effective_message,explicit_track=resolve_followup(request.message,request.history)
-    effective_track=explicit_track or request.english_track
+    previous_track=next((track_from_text(t.content) for t in reversed(request.history) if t.role=='user' and track_from_text(t.content)),None)
+    effective_track=explicit_track or request.english_track or previous_track
+    from app.academic_queries import year_from_question,term_from_question
+    if term_from_question(effective_message) and not year_from_question(effective_message):
+        previous_year=next((year_from_question(t.content) for t in reversed(request.history) if t.role=='user' and year_from_question(t.content)),None)
+        if previous_year:
+            effective_message+=f' سنة {previous_year}'
     boundary=unsupported_request(db,effective_message)
     deterministic = ('refusal',REFUSAL,[]) if boundary else lookup(db, effective_message, effective_track, request.program)
     if deterministic:
@@ -209,10 +215,4 @@ def sources_endpoint(program: Literal['software','simulation']='software'):
 
 @app.get('/api/faq')
 def faq_endpoint(program: Literal['software','simulation']='software'):
-    try:
-        with session() as db:
-            if program=='simulation':
-                return suggested_questions(program)
-            return [{'id': s.id, 'question': s.question, 'seed': True, 'frequency': None} for s in db.scalars(select(FAQ)).all()[:6]]
-    except Exception as exc:
-        raise HTTPException(503, 'Database unavailable or not ingested') from exc
+    return suggested_questions(program)

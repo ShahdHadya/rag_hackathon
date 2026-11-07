@@ -24,4 +24,9 @@ def suggested_questions(program):
         f'{code} كم ساعة؟',
         f'شو شروط القبول بتخصص {name}؟',
         'هل لازم آخذ كل المساقات الاختيارية؟',
+        'كم ساعة الفصل الأول سنة أولى Regular؟',
+        'شو مواد السنة الأولى Intermediate؟',
+        'شو مواد الفصل الثاني سنة ثانية Intensive؟',
+        'شو الفرق بالساعات بين Regular وIntermediate وIntensive؟',
+        f'بأي فصل موجود {code} في الخطة Regular؟',
     ])]

@@ -27,6 +27,11 @@ def evidence(db, sid, page=None):
             'caution': POLICY_CAUTION if sid == 'academic_guidance' else None}
 
 def lookup(db, message, track=None, program="software"):
+    from app.academic_queries import academic_lookup
+    track=track_from_text(message) or track
+    expanded=academic_lookup(db,message,track,program)
+    if expanded is not None:
+        return expanded
     simulation=program=="simulation"
     def proof_for(sid,page=None):
         return evidence(db,sid.replace("catalog_","simulation_") if simulation and sid.startswith("catalog_") else sid,page)
