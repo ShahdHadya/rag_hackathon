@@ -41,3 +41,5 @@ data/
 *.csv
 *.tsv
 *.xlsx
+bousala/backups/
+bousala/storage/

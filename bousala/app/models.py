@@ -20,6 +20,10 @@ class Source(Base):
     dates: Mapped[dict] = mapped_column(JSONB, default=dict)
     sha256: Mapped[str] = mapped_column(String)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    curriculum_id: Mapped[str | None] = mapped_column(ForeignKey('curriculum_versions.id'),index=True)
+    scope: Mapped[str] = mapped_column(String,default='program')
+    review_status: Mapped[str] = mapped_column(String,default='draft')
+    document_role: Mapped[str | None] = mapped_column(String)
 
 class Chunk(Base):
     __tablename__ = 'document_chunks'
@@ -89,3 +93,6 @@ class Evaluation(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True)
     dataset_hash: Mapped[str] = mapped_column(String)
     results: Mapped[dict] = mapped_column(JSONB)
+
+# Register the additive platform tables while preserving legacy imports.
+from app import platform_models as platform_models  # noqa: E402,F401

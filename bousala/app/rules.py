@@ -4,6 +4,7 @@ from sqlalchemy import select
 from app.models import Course, Prerequisite, Setting, Source, Chunk
 from app.text import codes, normalize
 from app.ingest import POLICY_CAUTION
+from app.context import track_from_text
 
 def weighted_gpa(pairs):
     if not pairs or any(Decimal(str(hours)) <= 0 for _, hours in pairs):
@@ -27,6 +28,7 @@ def evidence(db, sid, page=None):
 
 def lookup(db, message, track=None):
     q = normalize(message)
+    track=track_from_text(message) or track
     english = not re.search(r'[\u0600-\u06ff]', message)
     found = codes(message)
     if any(t in q for t in ('قبول', 'ACCEPTANCE', 'ATM')):

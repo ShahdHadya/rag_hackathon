@@ -2,6 +2,12 @@
 
 Local academic RAG phase for Bethlehem University's Software Engineering catalog 2024–2025. This is one chat page, not a student-record or registration system. The original Streamlit starter remains at the parent directory, with its own independent index.
 
+## Expansion status (work in progress)
+
+This snapshot includes English-track follow-up resolution, preliminary multi-curriculum database models/migration 002, Simulation PDF inspection tooling and frontend dependencies for the planned UI upgrade. Simulation ingestion, authentication, student profiles and the expanded UI are not implemented yet. Suggested questions remain available in the existing chat.
+
+Existing installations need `python -m alembic upgrade head` from this directory before using the updated source models, then a backend restart. Migration 002 is additive but has not been integration-tested against a live database in this snapshot; back up the dedicated database before applying it. Local credentials, PDFs, extracted reports, storage and database backups are excluded from Git.
+
 ```text
 7 bundled PDFs + prerequisite CSV → source/page/row registry → chunks + structured courses
                            ↓ local SentenceTransformers embeddings

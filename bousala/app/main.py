@@ -19,6 +19,7 @@ from app.retrieval import retrieve, check_index
 from app.rules import lookup
 from app.numeric_grounding import numeric_failures
 from app.scope import unsupported_request
+from app.context import resolve_followup
 
 REFUSAL = 'المعلومة غير متوفرة أو غير مؤكدة في المصادر الموجودة عندي'
 NOTICE = 'بوصلة نظام إرشادي يعتمد على الوثائق المتاحة، وليس بديلاً عن التأكيد من التسجيل الرسمي'
@@ -110,8 +111,10 @@ def chat(db, request, use_cache=True):
     ollama_ready()
     revision = db.get(Setting, 'revision').value['hash']
     key = cache_key(request, revision)
-    boundary=unsupported_request(db,request.message)
-    deterministic = ('refusal',REFUSAL,[]) if boundary else lookup(db, request.message, request.english_track)
+    effective_message,explicit_track=resolve_followup(request.message,request.history)
+    effective_track=explicit_track or request.english_track
+    boundary=unsupported_request(db,effective_message)
+    deterministic = ('refusal',REFUSAL,[]) if boundary else lookup(db, effective_message, effective_track)
     if deterministic:
         kind, answer, proof = deterministic
         hits = [p | {'id': i} for i,p in enumerate(proof, 1)]
@@ -125,14 +128,14 @@ def chat(db, request, use_cache=True):
                 return result
     else:
         # Resolve a short code-less follow-up using only the browser's recent USER question.
-        query = request.message
+        query = effective_message
         if len(query.split()) < 6 and not re.search(r'[A-Z]{4}\d{3}', query, re.I):
             prior = next((t.content for t in reversed(request.history) if t.role == 'user'), '')
             if prior:
                 query = prior+' '+query
         hits = retrieve(db, query)
         if hits:
-            answer, hits, refusal = compose(request.message, hits)
+            answer, hits, refusal = compose(effective_message, hits)
         else:
             answer, hits, refusal = REFUSAL, [], True
         kind = 'refusal' if refusal else 'rag'
